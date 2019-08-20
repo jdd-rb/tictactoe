@@ -12,6 +12,8 @@ import (
 		// Waiting list of games that need a partner
 		games.waitingList = make([]string, 0)
 		games.games = make(map[string]Game)
+
+		return games
 	}
 
 	type Games struct {
@@ -19,6 +21,42 @@ import (
 		lock sync.RWMutex
 		waitingList []string
 		games map[string]Game
+	}
+
+	func (g *Games) Exists(gameID string) bool {
+
+		// Read lock for this one
+		g.lock.RLock()
+		defer g.lock.RUnlock()
+
+		_, exists := g.games[gameID]
+		return exists
+	}
+
+	func (g *Games) GetStatus(gameID string) (GameStatus,bool) {
+
+		// Get a read lock
+		g.lock.RLock()
+		defer g.lock.RUnlock()
+
+		game, exists := g.games[gameID]
+
+		if(!exists) {
+
+			return GameStatus{}, false
+		}
+
+		status := GameStatus{ Active: game.Active, WaitingForPlayer: game.WaitingForPlayer, Won: game.IsWon()}
+		status.Board = game.Board
+		status.PlayerOne = game.PlayerOne.Name
+		status.PlayerTwo = game.PlayerTwo.Name
+
+		if(game.IsWon()) {
+
+			status.Winner = game.Winner.Name
+		}
+
+		return status, true
 	}
 
 	func (g *Games) JoinGame(player Player) string {
@@ -52,6 +90,8 @@ import (
 			joinGameID := g.waitingList[0]
 			joinGame := g.games[joinGameID]
 			joinGame.PlayerTwo = player
+			joinGame.WaitingForPlayer = false
+			joinGame.Active = true
 			g.games[joinGameID] = joinGame
 			gameID = joinGameID
 		}
@@ -88,5 +128,44 @@ import (
 			return false, err
 		}
 
+		// Save the gaem back
+		g.games[gameID] = game
 		return true, nil
+	}
+
+	func (g *Games) IsPlayingGame(gameID string, playerID string) bool {
+
+		// Get a read lock
+		g.lock.RLock()
+
+		// Grab the game
+		game, exists := g.games[gameID]
+
+		// Release the read lock
+		g.lock.RUnlock()
+
+		if(!exists) {
+
+			return false
+		}
+
+		// Are they a player?
+		return game.IsPlayer(playerID)
+	}
+
+	func (g *Games) GetBoard(gameID string) ([3][3]Point, bool) {
+
+		// Write lock - ensure this readout of the board is to the split second accurate
+		g.lock.RLock()
+		defer g.lock.Unlock()
+
+		// Grab the game
+		game, exists := g.games[gameID]
+
+		if(!exists) {
+
+			return [3][3]Point{}, false
+		}
+
+		return game.Board, true
 	}

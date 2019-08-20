@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"github.com/jddcode/tictactoe/Structures"
+	"strconv"
+	"encoding/json"
 )
 
 var games Structures.Games
@@ -26,11 +28,14 @@ var players Structures.Players
 		// Create a player (choose a 'cool' name)
 		router.GET("/players/create/:name", CreatePlayer)
 
-		// Get any currently active matches
+		// Either join a match, or join a newly created match
 		router.GET("/games/join/:playerID", JoinAGame)
 
 		// Make a move
-		router.PUT("/games/move/:playerID/:gameID/:xPos/:yPos", MakeAMove)
+		router.GET("/games/move/:playerID/:gameID/:xPos/:yPos", MakeAMove)
+
+		// Get the status of the game
+		router.GET("/games/status/:gameID", GetGameStatus)
 
 		err := http.ListenAndServe(":8080",router)
 
@@ -85,4 +90,45 @@ var players Structures.Players
 		w.Write([]byte(gameID))
 	}
 
+	func GetGameStatus(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
+		status, outcome := games.GetStatus(p.ByName("gameID"))
+
+		if(!outcome) {
+
+			w.WriteHeader(404)
+			w.Write([]byte("This game does not exist"))
+			return
+		}
+
+		// Give a status update
+		w.WriteHeader(200)
+		statusJson, _ := json.Marshal(status)
+		w.Write(statusJson)
+	}
+
+	func MakeAMove(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+
+		// We need a playerID, gameID and x and y co-ordinates
+		playerID := p.ByName("playerID")
+		gameID := p.ByName("gameID")
+		xPos, _ := strconv.Atoi(p.ByName("xPos"))
+		yPos, _ := strconv.Atoi(p.ByName("yPos"))
+
+		// Don't bother to check any of the four variables above becuase actually the various structs do this anyway
+
+		// So move right into assuming those are right, and attempting the play
+		outcome, err := games.MakeAMove(gameID, playerID, xPos, yPos)
+
+		// Let the player know the outcome
+		if(!outcome) {
+
+			w.WriteHeader(400)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		// Otherwise just a straight 200 OK will do
+		w.WriteHeader(200)
+		w.Write([]byte("OK"))
+	}
