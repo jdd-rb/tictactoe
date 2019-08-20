@@ -4,7 +4,6 @@ import (
 	"github.com/satori/go.uuid"
 	"errors"
 	"strconv"
-	"fmt"
 )
 
 	func NewGame() Game {
@@ -103,8 +102,6 @@ import (
 		g.Board[x][y].Player = ourPlayer
 		g.nextPlayer = nextPlayer
 
-		fmt.Println("move played by " + ourPlayer.Name + "; next up is player number " + strconv.Itoa(nextPlayer))
-
 		// Also calculate if we have won
 		g.CalculateWinner()
 
@@ -121,7 +118,6 @@ import (
 		// Left column, straight down
 		if(g.Board[0][0].Owned && g.Board[0][0].Player.Code == g.Board[0][1].Player.Code && g.Board[0][0].Player.Code == g.Board[0][2].Player.Code) {
 
-			fmt.Println("Winner, 1")
 			g.Active = false
 			g.Won = true
 			g.Winner = g.Board[0][0].Player
@@ -130,7 +126,6 @@ import (
 		// Middle column, straight down
 		if(g.Board[1][0].Owned && g.Board[1][0].Player.Code == g.Board[1][1].Player.Code && g.Board[1][0].Player.Code == g.Board[1][2].Player.Code) {
 
-			fmt.Println("Winner, 2")
 			g.Active = false
 			g.Won = true
 			g.Winner = g.Board[1][0].Player
@@ -139,7 +134,6 @@ import (
 		// Right column, straight down
 		if(g.Board[2][0].Owned && g.Board[2][0].Player.Code == g.Board[2][1].Player.Code && g.Board[2][0].Player.Code == g.Board[2][2].Player.Code) {
 
-			fmt.Println("Winner, 3")
 			g.Active = false
 			g.Won = true
 			g.Winner = g.Board[2][0].Player
@@ -148,7 +142,6 @@ import (
 		// Left row, across
 		if(g.Board[0][0].Owned && g.Board[0][0].Player.Code == g.Board[1][0].Player.Code && g.Board[0][0].Player.Code == g.Board[2][0].Player.Code) {
 
-			fmt.Println("Winner, 4")
 			g.Active = false
 			g.Won = true
 			g.Winner = g.Board[0][0].Player
